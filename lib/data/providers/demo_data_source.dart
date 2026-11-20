@@ -1,8 +1,10 @@
+import 'dart:convert';
 import 'dart:math';
 
 import 'package:nexbanak/app/constants/app_constants.dart';
-import 'package:nexbanak/core/errors/app_exception.dart';
 import 'package:nexbanak/core/domain/app_role.dart';
+import 'package:nexbanak/core/errors/app_exception.dart';
+import 'package:nexbanak/core/services/storage_service.dart';
 import 'package:nexbanak/core/utils/formatters.dart';
 import 'package:nexbanak/data/models/account_model.dart';
 import 'package:nexbanak/data/models/admin_models.dart';
@@ -12,12 +14,10 @@ import 'package:nexbanak/data/models/notification_model.dart';
 import 'package:nexbanak/data/models/transaction_model.dart';
 import 'package:nexbanak/data/models/user_model.dart';
 
-/// SIMULATOR ONLY. This is an in-memory fake of the backend used when
-/// `USE_MOCK=true`. It never touches a real ledger, never persists banking
-/// data, and every screen using it is badged "DEMO".
 class DemoDataSource {
   DemoDataSource() {
     _seed();
+    _loadFromStorage();
   }
 
   late final List<UserModel> _users;
@@ -454,7 +454,144 @@ class DemoDataSource {
     _transactions.insert(0, debit);
     _pushNotification('Transfer complete', '${Formatters.money(amount)} was sent to ${destination.name}. Reference ${debit.reference}.', 'transaction');
     _audit.insert(0, AuditEvent(id: 'aud_${_audit.length + 1}', actor: 'customer@nexbank.demo', action: 'TRANSFER', target: debit.reference, time: now, ip: 'demo'));
+    _persist();
     return debit;
+  }
+
+  Future<TransactionModel> createBillPayment({
+    required String accountId,
+    required String billerName,
+    required String customerCode,
+    required String amount,
+    required String note,
+  }) async {
+    await _latency();
+    final AccountModel source = await account(accountId);
+    _validateAmount(amount);
+    if (_cents(source.balance) < _cents(amount)) {
+      throw const AppException(
+        message: 'Insufficient available balance.',
+        code: 'INSUFFICIENT_FUNDS',
+        statusCode: 422,
+      );
+    }
+    final int cents = _cents(amount);
+    _accounts[_accounts.indexWhere((a) => a.id == source.id)] =
+        source.copyWithBalance(
+            ((_cents(source.balance) - cents) / 100).toStringAsFixed(2));
+    final String now = DateTime.now().toIso8601String();
+    final TransactionModel txn = TransactionModel(
+      id: 'txn_${_transactions.length + 1}',
+      reference: _reference(),
+      title: 'Bill Pay — $billerName',
+      type: 'card',
+      amount: amount,
+      direction: 'debit',
+      status: 'completed',
+      date: now,
+      accountId: source.id,
+      counterparty: customerCode,
+      category: 'Bills',
+      note: note.isNotEmpty ? note : 'Bill payment for $customerCode',
+    );
+    _transactions.insert(0, txn);
+    _pushNotification(
+      'Bill payment completed',
+      '${Formatters.money(amount)} paid for $billerName ($customerCode). Ref: ${txn.reference}',
+      'transaction',
+    );
+    _persist();
+    return txn;
+  }
+
+  Future<TransactionModel> createMobileTopup({
+    required String accountId,
+    required String operatorName,
+    required String mobileNumber,
+    required String amount,
+  }) async {
+    await _latency();
+    final AccountModel source = await account(accountId);
+    _validateAmount(amount);
+    if (_cents(source.balance) < _cents(amount)) {
+      throw const AppException(
+        message: 'Insufficient available balance.',
+        code: 'INSUFFICIENT_FUNDS',
+        statusCode: 422,
+      );
+    }
+    final int cents = _cents(amount);
+    _accounts[_accounts.indexWhere((a) => a.id == source.id)] =
+        source.copyWithBalance(
+            ((_cents(source.balance) - cents) / 100).toStringAsFixed(2));
+    final String now = DateTime.now().toIso8601String();
+    final TransactionModel txn = TransactionModel(
+      id: 'txn_${_transactions.length + 1}',
+      reference: _reference(),
+      title: 'Top-up — $operatorName ($mobileNumber)',
+      type: 'card',
+      amount: amount,
+      direction: 'debit',
+      status: 'completed',
+      date: now,
+      accountId: source.id,
+      counterparty: mobileNumber,
+      category: 'Topup',
+      note: 'Mobile recharge',
+    );
+    _transactions.insert(0, txn);
+    _pushNotification(
+      'Top-up successful',
+      '${Formatters.money(amount)} top-up to $operatorName ($mobileNumber). Ref: ${txn.reference}',
+      'transaction',
+    );
+    _persist();
+    return txn;
+  }
+
+  Future<TransactionModel> createMfsTransfer({
+    required String accountId,
+    required String mfsProvider,
+    required String recipientMobile,
+    required String amount,
+  }) async {
+    await _latency();
+    final AccountModel source = await account(accountId);
+    _validateAmount(amount);
+    if (_cents(source.balance) < _cents(amount)) {
+      throw const AppException(
+        message: 'Insufficient available balance.',
+        code: 'INSUFFICIENT_FUNDS',
+        statusCode: 422,
+      );
+    }
+    final int cents = _cents(amount);
+    _accounts[_accounts.indexWhere((a) => a.id == source.id)] =
+        source.copyWithBalance(
+            ((_cents(source.balance) - cents) / 100).toStringAsFixed(2));
+    final String now = DateTime.now().toIso8601String();
+    final TransactionModel txn = TransactionModel(
+      id: 'txn_${_transactions.length + 1}',
+      reference: _reference(),
+      title: 'Transfer to $mfsProvider ($recipientMobile)',
+      type: 'transfer',
+      amount: amount,
+      direction: 'debit',
+      status: 'completed',
+      date: now,
+      accountId: source.id,
+      counterparty: recipientMobile,
+      category: 'MFS Transfer',
+      note: '$mfsProvider cash-out',
+    );
+    _transactions.insert(0, txn);
+    _pushNotification(
+      'MFS Transfer complete',
+      '${Formatters.money(amount)} transferred to $mfsProvider ($recipientMobile). Ref: ${txn.reference}',
+      'transaction',
+    );
+    _persist();
+    return txn;
   }
 
   Future<List<BeneficiaryModel>> beneficiaries() async {
@@ -726,6 +863,67 @@ class DemoDataSource {
       id: 'ntf_${_notifications.length + 1}', title: title, body: body,
       time: DateTime.now().toIso8601String(), type: type,
     ));
+    _persist();
+  }
+
+  void _persist() {
+    try {
+      final StorageService storage = StorageService.instance;
+      storage.setString('demo.accounts', jsonEncode(_accounts.map((e) => e.toJson()).toList()));
+      storage.setString('demo.transactions', jsonEncode(_transactions.map((e) => e.toJson()).toList()));
+      storage.setString('demo.beneficiaries', jsonEncode(_beneficiaries.map((e) => e.toJson()).toList()));
+      storage.setString('demo.loans', jsonEncode(_loans.map((e) => e.toJson()).toList()));
+      storage.setString('demo.cards', jsonEncode(_cards.map((e) => e.toJson()).toList()));
+      storage.setString('demo.notifications', jsonEncode(_notifications.map((e) => e.toJson()).toList()));
+      storage.setString('demo.goals', jsonEncode(_goals.map((e) => e.toJson()).toList()));
+      storage.setString('demo.fixed_deposits', jsonEncode(_fixedDeposits.map((e) => e.toJson()).toList()));
+    } catch (_) {}
+  }
+
+  void _loadFromStorage() {
+    try {
+      final StorageService storage = StorageService.instance;
+      final String? accStr = storage.getString('demo.accounts');
+      if (accStr != null && accStr.isNotEmpty) {
+        final List list = jsonDecode(accStr) as List;
+        _accounts = list.map((e) => AccountModel.fromJson(Map<String, dynamic>.from(e as Map))).toList();
+      }
+      final String? txnStr = storage.getString('demo.transactions');
+      if (txnStr != null && txnStr.isNotEmpty) {
+        final List list = jsonDecode(txnStr) as List;
+        _transactions = list.map((e) => TransactionModel.fromJson(Map<String, dynamic>.from(e as Map))).toList();
+      }
+      final String? benStr = storage.getString('demo.beneficiaries');
+      if (benStr != null && benStr.isNotEmpty) {
+        final List list = jsonDecode(benStr) as List;
+        _beneficiaries = list.map((e) => BeneficiaryModel.fromJson(Map<String, dynamic>.from(e as Map))).toList();
+      }
+      final String? loanStr = storage.getString('demo.loans');
+      if (loanStr != null && loanStr.isNotEmpty) {
+        final List list = jsonDecode(loanStr) as List;
+        _loans = list.map((e) => LoanModel.fromJson(Map<String, dynamic>.from(e as Map))).toList();
+      }
+      final String? cardStr = storage.getString('demo.cards');
+      if (cardStr != null && cardStr.isNotEmpty) {
+        final List list = jsonDecode(cardStr) as List;
+        _cards = list.map((e) => CardModel.fromJson(Map<String, dynamic>.from(e as Map))).toList();
+      }
+      final String? ntfStr = storage.getString('demo.notifications');
+      if (ntfStr != null && ntfStr.isNotEmpty) {
+        final List list = jsonDecode(ntfStr) as List;
+        _notifications = list.map((e) => NotificationModel.fromJson(Map<String, dynamic>.from(e as Map))).toList();
+      }
+      final String? goalStr = storage.getString('demo.goals');
+      if (goalStr != null && goalStr.isNotEmpty) {
+        final List list = jsonDecode(goalStr) as List;
+        _goals = list.map((e) => SavingsGoalModel.fromJson(Map<String, dynamic>.from(e as Map))).toList();
+      }
+      final String? fdStr = storage.getString('demo.fixed_deposits');
+      if (fdStr != null && fdStr.isNotEmpty) {
+        final List list = jsonDecode(fdStr) as List;
+        _fixedDeposits = list.map((e) => FixedDepositModel.fromJson(Map<String, dynamic>.from(e as Map))).toList();
+      }
+    } catch (_) {}
   }
 
   void _checkIdempotency(String key) {

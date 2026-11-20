@@ -68,6 +68,18 @@ class LoanModel {
         interestRate: (json['interestRate'] ?? '8.5').toString(),
         nextDueDate: (json['nextDueDate'] ?? '').toString(),
       );
+
+  Map<String, dynamic> toJson() => <String, dynamic>{
+        'id': id,
+        'type': type,
+        'amount': amount,
+        'outstanding': outstanding,
+        'status': status,
+        'appliedAt': appliedAt,
+        'termMonths': termMonths,
+        'interestRate': interestRate,
+        'nextDueDate': nextDueDate,
+      };
 }
 
 class CardModel {
@@ -100,6 +112,16 @@ class CardModel {
         status: (json['status'] ?? 'active').toString(),
         limit: (json['limit'] ?? '5000').toString(),
       );
+
+  Map<String, dynamic> toJson() => <String, dynamic>{
+        'id': id,
+        'type': type,
+        'last4': last4,
+        'holder': holder,
+        'expiry': expiry,
+        'status': status,
+        'limit': limit,
+      };
 }
 
 class SavingsGoalModel {
@@ -130,6 +152,14 @@ class SavingsGoalModel {
         saved: (json['saved'] ?? '0').toString(),
         deadline: (json['deadline'] ?? '').toString(),
       );
+
+  Map<String, dynamic> toJson() => <String, dynamic>{
+        'id': id,
+        'name': name,
+        'target': target,
+        'saved': saved,
+        'deadline': deadline,
+      };
 }
 
 class FixedDepositModel {
@@ -157,4 +187,13 @@ class FixedDepositModel {
         status: (json['status'] ?? 'active').toString(),
         startedAt: (json['startedAt'] ?? '').toString(),
       );
+
+  Map<String, dynamic> toJson() => <String, dynamic>{
+        'id': id,
+        'amount': amount,
+        'termMonths': termMonths,
+        'rate': rate,
+        'status': status,
+        'startedAt': startedAt,
+      };
 }

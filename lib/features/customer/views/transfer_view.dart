@@ -8,6 +8,8 @@ import 'package:nexbanak/app/theme/app_text_styles.dart';
 import 'package:nexbanak/core/utils/formatters.dart';
 import 'package:nexbanak/core/utils/validators.dart';
 import 'package:nexbanak/features/customer/controllers/money_controller.dart';
+import 'package:nexbanak/shared/widgets/animated_card.dart';
+import 'package:nexbanak/shared/widgets/brand_icons.dart';
 import 'package:nexbanak/shared/widgets/buttons.dart';
 import 'package:nexbanak/shared/widgets/dialogs.dart';
 import 'package:nexbanak/shared/widgets/feedback_widgets.dart';
@@ -46,7 +48,8 @@ class TransferView extends StatelessWidget {
               onSelectionChanged: (Set<String> value) => c.mode.value = value.first,
             ),
             const SizedBox(height: 20),
-            Card(
+            AnimatedCard(
+              borderRadius: 20,
               child: Padding(
                 padding: const EdgeInsets.all(20),
                 child: Column(
@@ -169,35 +172,33 @@ class TransferView extends StatelessWidget {
             const SizedBox(height: 24),
             SectionHeader(title: 'Beneficiaries', actionLabel: 'Add new', onAction: () => _addBeneficiary(c)),
             const SizedBox(height: 10),
-            Card(
-              child: c.beneficiaries.isEmpty
-                  ? const EmptyStateWidget(title: 'No beneficiaries yet')
-                  : Column(
-                      children: c.beneficiaries
-                          .map(
-                            (b) => ListTile(
-                              leading: const CircleAvatar(
-                                child: Icon(Icons.person_outline_rounded, size: 18),
-                              ),
-                              title: Text(b.name, style: AppTextStyles.bodyLarge),
-                              subtitle: Text(
-                                '${b.bank} • ${Formatters.maskAccount(b.accountNumber)}',
-                                style: AppTextStyles.bodySmall,
-                              ),
-                              trailing: IconButton(
-                                icon: const Icon(Icons.delete_outline_rounded,
-                                    color: AppColors.error),
-                                onPressed: () => _removeBeneficiary(c, b.id),
-                              ),
-                              onTap: () {
-                                c.useBeneficiary(b);
-                                accountNumber.text = b.accountNumber;
-                              },
-                            ),
-                          )
-                          .toList(),
+            if (c.beneficiaries.isEmpty)
+              const EmptyStateWidget(title: 'No beneficiaries yet')
+            else
+              ...c.beneficiaries.map(
+                (b) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: AnimatedCard(
+                    borderRadius: 14,
+                    child: ListTile(
+                      leading: BrandIcons.bankLogo(b.bank, size: 38),
+                      title: Text(b.name, style: AppTextStyles.bodyLarge),
+                      subtitle: Text(
+                        '${b.bank} • ${Formatters.maskAccount(b.accountNumber)}',
+                        style: AppTextStyles.bodySmall,
+                      ),
+                      trailing: IconButton(
+                        icon: const Icon(Icons.delete_outline_rounded, color: AppColors.error),
+                        onPressed: () => _removeBeneficiary(c, b.id),
+                      ),
+                      onTap: () {
+                        c.useBeneficiary(b);
+                        accountNumber.text = b.accountNumber;
+                      },
                     ),
-            ),
+                  ),
+                ),
+              ),
             const SizedBox(height: 30),
           ],
         ),

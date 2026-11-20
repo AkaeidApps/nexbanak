@@ -112,14 +112,19 @@ class NexBankDrawer extends StatelessWidget {
   Widget build(BuildContext context) {
     final AuthService auth = Get.find<AuthService>();
     final List<NavItem> all = <NavItem>[...controller.items, ...extraItems];
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final Color selectedBg = isDark ? AppColors.darkSurfaceAlt : AppColors.lightBlue;
+    final Color selectedIconColor = isDark ? AppColors.secondaryBlue : AppColors.primaryNavy;
+
     return Drawer(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       child: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 22, 20, 14),
-              child: NexBankLogo(showTagline: true, size: 38),
+              child: NexBankLogo(showTagline: true, size: 38, light: isDark),
             ),
             const Divider(),
             Padding(
@@ -135,10 +140,12 @@ class NexBankDrawer extends StatelessWidget {
                   itemCount: all.length,
                   itemBuilder: (context, i) {
                     final NavItem item = all[i];
+                    final bool isSel = i == selected && i < controller.items.length;
                     return ListTile(
-                      selected: i == selected && i < controller.items.length,
-                      selectedTileColor: AppColors.lightBlue,
-                      leading: Icon(item.icon, size: 20),
+                      selected: isSel,
+                      selectedTileColor: selectedBg,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      leading: Icon(item.icon, size: 20, color: isSel ? selectedIconColor : null),
                       title: Text(item.label, style: AppTextStyles.bodyMedium),
                       onTap: () {
                         if (i < controller.items.length) {
@@ -271,13 +278,17 @@ class NexShell extends StatelessWidget {
                           Expanded(
                             child: Obx(() {
                               final int selected = controller.index.value;
+                              final bool isDark = Theme.of(context).brightness == Brightness.dark;
+                              final Color selectedBg = isDark ? AppColors.darkSurfaceAlt : AppColors.lightBlue;
                               return ListView.builder(
                                 itemCount: items.length,
                                 itemBuilder: (context, i) {
                                   final NavItem item = items[i];
+                                  final bool isSel = i == selected;
                                   return ListTile(
-                                    selected: i == selected,
-                                    selectedTileColor: AppColors.lightBlue,
+                                    selected: isSel,
+                                    selectedTileColor: selectedBg,
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                                     leading: Icon(item.icon, size: 20),
                                     title: Text(item.label, style: AppTextStyles.bodyMedium),
                                     onTap: () => controller.changeTab(i),

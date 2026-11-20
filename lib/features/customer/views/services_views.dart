@@ -4,13 +4,14 @@ import 'package:nexbanak/app/theme/app_text_styles.dart';
 import 'package:nexbanak/core/utils/formatters.dart';
 import 'package:nexbanak/data/models/banking_models.dart';
 import 'package:nexbanak/features/customer/controllers/services_controller.dart';
+import 'package:nexbanak/shared/widgets/animated_card.dart';
+import 'package:nexbanak/shared/widgets/brand_icons.dart';
 import 'package:nexbanak/shared/widgets/buttons.dart';
 import 'package:nexbanak/shared/widgets/feedback_widgets.dart';
 import 'package:nexbanak/shared/widgets/input_fields.dart';
 import 'package:nexbanak/shared/widgets/screen_scaffold.dart';
 
-/// Loans application and servicing. Submitted requests stay pending until an
-/// authorized checker reviews them; the app never approves its own request.
+/// Loans application and servicing.
 class LoansView extends StatelessWidget {
   const LoansView({super.key});
 
@@ -32,7 +33,8 @@ class LoansView extends StatelessWidget {
               Text('Apply for financing and manage repayments',
                   style: AppTextStyles.bodyMedium),
               const SizedBox(height: 18),
-              Card(
+              AnimatedCard(
+                borderRadius: 20,
                 child: Padding(
                   padding: const EdgeInsets.all(20),
                   child: Column(
@@ -116,7 +118,8 @@ class _LoanCard extends StatelessWidget {
   final ServicesController controller;
 
   @override
-  Widget build(BuildContext context) => Card(
+  Widget build(BuildContext context) => AnimatedCard(
+        borderRadius: 16,
         child: Padding(
           padding: const EdgeInsets.all(18),
           child: Column(
@@ -162,17 +165,14 @@ class _LoanCard extends StatelessWidget {
       );
 
   Future<void> _repay(ServicesController c, LoanModel loan) async {
-    final TextEditingController amount = TextEditingController(
-      text: loan.outstanding,
-    );
+    final TextEditingController amount = TextEditingController(text: loan.outstanding);
     final bool? confirmed = await Get.dialog<bool>(
       AlertDialog(
         title: const Text('Repay loan'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            Text('Outstanding: ${Formatters.money(loan.outstanding)}',
-                style: AppTextStyles.bodyMedium),
+            Text('Outstanding: ${Formatters.money(loan.outstanding)}', style: AppTextStyles.bodyMedium),
             const SizedBox(height: 12),
             AmountInputField(controller: amount),
           ],
@@ -193,7 +193,7 @@ class _LoanCard extends StatelessWidget {
   }
 }
 
-/// Debit and credit card overview with status controls.
+/// Debit and credit card overview.
 class CardsView extends StatelessWidget {
   const CardsView({super.key});
 
@@ -210,8 +210,7 @@ class CardsView extends StatelessWidget {
             children: <Widget>[
               Text('Cards', style: AppTextStyles.headlineMedium),
               const SizedBox(height: 4),
-              Text('Control your debit and credit cards',
-                  style: AppTextStyles.bodyMedium),
+              Text('Control your debit and credit cards', style: AppTextStyles.bodyMedium),
               const SizedBox(height: 18),
               if (c.cards.isEmpty)
                 const EmptyStateWidget(title: 'No cards linked to your profile')
@@ -238,7 +237,8 @@ class _CardTile extends StatelessWidget {
   final ServicesController controller;
 
   @override
-  Widget build(BuildContext context) => Card(
+  Widget build(BuildContext context) => AnimatedCard(
+        borderRadius: 20,
         child: Padding(
           padding: const EdgeInsets.all(20),
           child: Column(
@@ -246,12 +246,7 @@ class _CardTile extends StatelessWidget {
             children: <Widget>[
               Row(
                 children: <Widget>[
-                  Icon(
-                    card.type.toLowerCase() == 'credit'
-                        ? Icons.credit_card_rounded
-                        : Icons.payment_rounded,
-                    color: const Color(0xFF1D4ED8),
-                  ),
+                  BrandIcons.visa(size: 26),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
@@ -276,19 +271,16 @@ class _CardTile extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text('•••• •••• •••• ${card.last4}',
-                        style: AppTextStyles.headlineSmall
-                            .copyWith(color: Colors.white)),
+                        style: AppTextStyles.headlineSmall.copyWith(color: Colors.white)),
                     const SizedBox(height: 18),
                     Row(
                       children: <Widget>[
                         Expanded(
                           child: Text(card.holder.toUpperCase(),
-                              style: AppTextStyles.labelSmall
-                                  .copyWith(color: Colors.white70)),
+                              style: AppTextStyles.labelSmall.copyWith(color: Colors.white70)),
                         ),
                         Text('EXPIRES ${card.expiry}',
-                            style: AppTextStyles.labelSmall
-                                .copyWith(color: Colors.white70)),
+                            style: AppTextStyles.labelSmall.copyWith(color: Colors.white70)),
                       ],
                     ),
                   ],
@@ -297,8 +289,7 @@ class _CardTile extends StatelessWidget {
               const SizedBox(height: 14),
               Row(
                 children: <Widget>[
-                  Text('Limit: ${Formatters.money(card.limit)}',
-                      style: AppTextStyles.bodySmall),
+                  Text('Limit: ${Formatters.money(card.limit)}', style: AppTextStyles.bodySmall),
                   const Spacer(),
                   OutlinedButton(
                     onPressed: () => controller.setCardStatus(
@@ -343,7 +334,8 @@ class SavingsView extends StatelessWidget {
                 ...c.goals.map(
                   (goal) => Padding(
                     padding: const EdgeInsets.only(bottom: 12),
-                    child: Card(
+                    child: AnimatedCard(
+                      borderRadius: 16,
                       child: Padding(
                         padding: const EdgeInsets.all(18),
                         child: Column(
@@ -351,12 +343,8 @@ class SavingsView extends StatelessWidget {
                           children: <Widget>[
                             Row(
                               children: <Widget>[
-                                Expanded(
-                                  child: Text(goal.name,
-                                      style: AppTextStyles.titleMedium),
-                                ),
-                                Text('${(goal.progress * 100).round()}%',
-                                    style: AppTextStyles.labelLarge),
+                                Expanded(child: Text(goal.name, style: AppTextStyles.titleMedium)),
+                                Text('${(goal.progress * 100).round()}%', style: AppTextStyles.labelLarge),
                               ],
                             ),
                             const SizedBox(height: 12),
@@ -366,13 +354,10 @@ class SavingsView extends StatelessWidget {
                               borderRadius: BorderRadius.circular(4),
                             ),
                             const SizedBox(height: 10),
-                            Text(
-                              '${Formatters.money(goal.saved)} of ${Formatters.money(goal.target)}',
-                              style: AppTextStyles.bodySmall,
-                            ),
+                            Text('${Formatters.money(goal.saved)} of ${Formatters.money(goal.target)}',
+                                style: AppTextStyles.bodySmall),
                             if (goal.deadline.isNotEmpty)
-                              Text('Target date: ${Formatters.date(goal.deadline)}',
-                                  style: AppTextStyles.bodySmall),
+                              Text('Target date: ${Formatters.date(goal.deadline)}', style: AppTextStyles.bodySmall),
                           ],
                         ),
                       ),
@@ -380,7 +365,8 @@ class SavingsView extends StatelessWidget {
                   ),
                 ),
               const SizedBox(height: 18),
-              Card(
+              AnimatedCard(
+                borderRadius: 20,
                 child: Padding(
                   padding: const EdgeInsets.all(20),
                   child: Column(
@@ -431,18 +417,22 @@ class SavingsView extends StatelessWidget {
                 const EmptyStateWidget(title: 'No fixed deposits')
               else
                 ...c.fixedDeposits.map(
-                  (fd) => Card(
-                    child: ListTile(
-                      leading: const Icon(Icons.savings_rounded),
-                      title: Text(Formatters.money(fd.amount),
-                          style: AppTextStyles.titleMedium),
-                      subtitle: Text('${fd.termMonths} months • ${fd.rate}% p.a.'),
-                      trailing: StatusChip(status: fd.status),
+                  (fd) => Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: AnimatedCard(
+                      borderRadius: 14,
+                      child: ListTile(
+                        leading: const Icon(Icons.savings_rounded),
+                        title: Text(Formatters.money(fd.amount), style: AppTextStyles.titleMedium),
+                        subtitle: Text('${fd.termMonths} months • ${fd.rate}% p.a.'),
+                        trailing: StatusChip(status: fd.status),
+                      ),
                     ),
                   ),
                 ),
               const SizedBox(height: 18),
-              Card(
+              AnimatedCard(
+                borderRadius: 20,
                 child: Padding(
                   padding: const EdgeInsets.all(20),
                   child: Column(
@@ -487,6 +477,311 @@ class SavingsView extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Utility Bill Pay View with real biller logos.
+class BillPayView extends StatelessWidget {
+  const BillPayView({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final ServicesController c = Get.find<ServicesController>();
+    final TextEditingController customerCode = TextEditingController();
+    final TextEditingController amount = TextEditingController();
+    final TextEditingController note = TextEditingController();
+
+    final List<Map<String, String>> billers = <Map<String, String>>[
+      <String, String>{'name': 'DESCO Electricity', 'type': 'electricity'},
+      <String, String>{'name': 'DPDC Electricity', 'type': 'electricity'},
+      <String, String>{'name': 'WASA Water', 'type': 'water'},
+      <String, String>{'name': 'Titas Gas', 'type': 'gas'},
+      <String, String>{'name': 'Carnival Broadband', 'type': 'internet'},
+    ];
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('Pay Utility Bills')),
+      body: ScreenScaffold(
+        controller: c,
+        child: Obx(
+          () => Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text('Utility Bill Payment', style: AppTextStyles.headlineMedium),
+              const SizedBox(height: 4),
+              Text('Pay electricity, water, gas & internet bills instantly', style: AppTextStyles.bodyMedium),
+              const SizedBox(height: 20),
+              AnimatedCard(
+                borderRadius: 20,
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: <Widget>[
+                      Text('Select Provider', style: AppTextStyles.titleMedium),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 10,
+                        runSpacing: 10,
+                        children: billers.map((b) {
+                          final bool selected = c.billerName.value == b['name'];
+                          return ChoiceChip(
+                            avatar: BrandIcons.utilityLogo(b['type']!, size: 24),
+                            label: Text(b['name']!),
+                            selected: selected,
+                            onSelected: (val) {
+                              if (val) c.billerName.value = b['name']!;
+                            },
+                          );
+                        }).toList(),
+                      ),
+                      const SizedBox(height: 18),
+                      CustomTextField(
+                        label: 'Account / Customer Code',
+                        hint: 'e.g. 10293847',
+                        controller: customerCode,
+                        keyboardType: TextInputType.number,
+                        onChanged: (v) => c.customerCode.value = v,
+                      ),
+                      const SizedBox(height: 14),
+                      AmountInputField(
+                        controller: amount,
+                        onChanged: (v) => c.billAmount.value = v,
+                      ),
+                      const SizedBox(height: 14),
+                      CustomTextField(
+                        label: 'Note (Optional)',
+                        controller: note,
+                        onChanged: (v) => c.billNote.value = v,
+                      ),
+                      const SizedBox(height: 22),
+                      Obx(
+                        () => PrimaryButton(
+                          label: 'Pay Bill Now',
+                          isLoading: c.isLoading.value,
+                          onPressed: () async {
+                            await c.payBill();
+                            customerCode.clear();
+                            amount.clear();
+                            note.clear();
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 30),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Mobile Top-up View with real operator logos.
+class MobileTopupView extends StatelessWidget {
+  const MobileTopupView({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final ServicesController c = Get.find<ServicesController>();
+    final TextEditingController mobile = TextEditingController();
+    final TextEditingController amount = TextEditingController();
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('Mobile Top-up')),
+      body: ScreenScaffold(
+        controller: c,
+        child: Obx(
+          () => Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text('Mobile Recharge', style: AppTextStyles.headlineMedium),
+              const SizedBox(height: 4),
+              Text('Instant airtime top-up for any mobile operator', style: AppTextStyles.bodyMedium),
+              const SizedBox(height: 20),
+              AnimatedCard(
+                borderRadius: 20,
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: <Widget>[
+                      Text('Select Operator', style: AppTextStyles.titleMedium),
+                      const SizedBox(height: 14),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: <Widget>[
+                          _operatorOption('Grameenphone', BrandIcons.grameenphone(size: 34), c),
+                          _operatorOption('Robi', BrandIcons.robi(size: 34), c),
+                          _operatorOption('Banglalink', BrandIcons.banglalink(size: 34), c),
+                          _operatorOption('Teletalk', BrandIcons.teletalk(size: 34), c),
+                          _operatorOption('Airtel', BrandIcons.airtel(size: 34), c),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                      CustomTextField(
+                        label: 'Mobile Number',
+                        hint: '01700000000',
+                        controller: mobile,
+                        keyboardType: TextInputType.phone,
+                        onChanged: (v) => c.mobileNumber.value = v,
+                      ),
+                      const SizedBox(height: 14),
+                      AmountInputField(
+                        controller: amount,
+                        onChanged: (v) => c.topupAmount.value = v,
+                      ),
+                      const SizedBox(height: 22),
+                      Obx(
+                        () => PrimaryButton(
+                          label: 'Recharge Now',
+                          isLoading: c.isLoading.value,
+                          onPressed: () async {
+                            await c.topupMobile();
+                            mobile.clear();
+                            amount.clear();
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 30),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _operatorOption(String name, Widget logo, ServicesController c) {
+    final bool isSelected = c.operatorName.value == name;
+    return GestureDetector(
+      onTap: () => c.operatorName.value = name,
+      child: Column(
+        children: <Widget>[
+          Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: isSelected ? const Color(0xFF1D4ED8) : Colors.transparent,
+                width: 2.5,
+              ),
+            ),
+            child: logo,
+          ),
+          const SizedBox(height: 6),
+          Text(name, style: TextStyle(fontSize: 11, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
+        ],
+      ),
+    );
+  }
+}
+
+/// MFS Cash-Out / Transfer View (bKash, Nagad, Rocket, Upay).
+class MfsTransferView extends StatelessWidget {
+  const MfsTransferView({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final ServicesController c = Get.find<ServicesController>();
+    final TextEditingController mobile = TextEditingController();
+    final TextEditingController amount = TextEditingController();
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('MFS Transfer')),
+      body: ScreenScaffold(
+        controller: c,
+        child: Obx(
+          () => Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text('Mobile Financial Services', style: AppTextStyles.headlineMedium),
+              const SizedBox(height: 4),
+              Text('Instant money transfer to bKash, Nagad, Rocket & Upay', style: AppTextStyles.bodyMedium),
+              const SizedBox(height: 20),
+              AnimatedCard(
+                borderRadius: 20,
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: <Widget>[
+                      Text('Select Wallet', style: AppTextStyles.titleMedium),
+                      const SizedBox(height: 14),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: <Widget>[
+                          _mfsOption('bKash', BrandIcons.bkash(size: 38), c),
+                          _mfsOption('Nagad', BrandIcons.nagad(size: 38), c),
+                          _mfsOption('Rocket', BrandIcons.rocket(size: 38), c),
+                          _mfsOption('Upay', BrandIcons.upay(size: 38), c),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                      CustomTextField(
+                        label: 'Recipient Mobile Number',
+                        hint: '01700000000',
+                        controller: mobile,
+                        keyboardType: TextInputType.phone,
+                        onChanged: (v) => c.mfsMobile.value = v,
+                      ),
+                      const SizedBox(height: 14),
+                      AmountInputField(
+                        controller: amount,
+                        onChanged: (v) => c.mfsAmount.value = v,
+                      ),
+                      const SizedBox(height: 22),
+                      Obx(
+                        () => PrimaryButton(
+                          label: 'Send Money to Wallet',
+                          isLoading: c.isLoading.value,
+                          onPressed: () async {
+                            await c.transferMfs();
+                            mobile.clear();
+                            amount.clear();
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 30),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _mfsOption(String name, Widget logo, ServicesController c) {
+    final bool isSelected = c.mfsProvider.value == name;
+    return GestureDetector(
+      onTap: () => c.mfsProvider.value = name,
+      child: Column(
+        children: <Widget>[
+          Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: isSelected ? const Color(0xFF1D4ED8) : Colors.transparent,
+                width: 2.5,
+              ),
+            ),
+            child: logo,
+          ),
+          const SizedBox(height: 6),
+          Text(name, style: TextStyle(fontSize: 11, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
+        ],
       ),
     );
   }

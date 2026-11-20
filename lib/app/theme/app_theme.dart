@@ -131,6 +131,17 @@ class AppTheme {
         ),
         labelStyle: TextStyle(color: AppColors.mutedText(isDark)),
       ),
+      drawerTheme: DrawerThemeData(
+        backgroundColor: scaffold,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.only(
+            topRight: Radius.circular(20),
+            bottomRight: Radius.circular(20),
+          ),
+        ),
+      ),
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
         backgroundColor: surface,
         selectedItemColor: AppColors.secondaryBlue,

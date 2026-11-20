@@ -71,6 +71,25 @@ abstract class BankingRepository {
     required String amount,
     required int termMonths,
   });
+  Future<TransactionModel> createBillPayment({
+    required String accountId,
+    required String billerName,
+    required String customerCode,
+    required String amount,
+    required String note,
+  });
+  Future<TransactionModel> createMobileTopup({
+    required String accountId,
+    required String operatorName,
+    required String mobileNumber,
+    required String amount,
+  });
+  Future<TransactionModel> createMfsTransfer({
+    required String accountId,
+    required String mfsProvider,
+    required String recipientMobile,
+    required String amount,
+  });
   Future<List<NotificationModel>> notifications();
   Future<void> markNotificationRead(String id);
   Future<void> markAllNotificationsRead();
@@ -307,6 +326,59 @@ class RemoteBankingRepository implements BankingRepository {
       ));
 
   @override
+  Future<TransactionModel> createBillPayment({
+    required String accountId,
+    required String billerName,
+    required String customerCode,
+    required String amount,
+    required String note,
+  }) async =>
+      TransactionModel.fromJson(extractMap(
+        await _api.post('/bills/pay', data: <String, dynamic>{
+          'accountId': accountId,
+          'billerName': billerName,
+          'customerCode': customerCode,
+          'amount': amount,
+          'note': note,
+        }),
+        'transaction',
+      ));
+
+  @override
+  Future<TransactionModel> createMobileTopup({
+    required String accountId,
+    required String operatorName,
+    required String mobileNumber,
+    required String amount,
+  }) async =>
+      TransactionModel.fromJson(extractMap(
+        await _api.post('/topup', data: <String, dynamic>{
+          'accountId': accountId,
+          'operatorName': operatorName,
+          'mobileNumber': mobileNumber,
+          'amount': amount,
+        }),
+        'transaction',
+      ));
+
+  @override
+  Future<TransactionModel> createMfsTransfer({
+    required String accountId,
+    required String mfsProvider,
+    required String recipientMobile,
+    required String amount,
+  }) async =>
+      TransactionModel.fromJson(extractMap(
+        await _api.post('/mfs/transfer', data: <String, dynamic>{
+          'accountId': accountId,
+          'mfsProvider': mfsProvider,
+          'recipientMobile': recipientMobile,
+          'amount': amount,
+        }),
+        'transaction',
+      ));
+
+  @override
   Future<List<NotificationModel>> notifications() async {
     final Map<String, dynamic> body = await _api.get(ApiEndpoints.notifications);
     return extractList(body, 'notifications').map(NotificationModel.fromJson).toList();
@@ -445,6 +517,40 @@ class DemoBankingRepository implements BankingRepository {
     required int termMonths,
   }) =>
       _demo.openFixedDeposit(amount: amount, termMonths: termMonths);
+  @override
+  Future<TransactionModel> createBillPayment({
+    required String accountId,
+    required String billerName,
+    required String customerCode,
+    required String amount,
+    required String note,
+  }) =>
+      _demo.createBillPayment(
+        accountId: accountId, billerName: billerName, customerCode: customerCode,
+        amount: amount, note: note,
+      );
+  @override
+  Future<TransactionModel> createMobileTopup({
+    required String accountId,
+    required String operatorName,
+    required String mobileNumber,
+    required String amount,
+  }) =>
+      _demo.createMobileTopup(
+        accountId: accountId, operatorName: operatorName, mobileNumber: mobileNumber,
+        amount: amount,
+      );
+  @override
+  Future<TransactionModel> createMfsTransfer({
+    required String accountId,
+    required String mfsProvider,
+    required String recipientMobile,
+    required String amount,
+  }) =>
+      _demo.createMfsTransfer(
+        accountId: accountId, mfsProvider: mfsProvider, recipientMobile: recipientMobile,
+        amount: amount,
+      );
   @override
   Future<List<NotificationModel>> notifications() => _demo.notifications();
   @override

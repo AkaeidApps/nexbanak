@@ -6,6 +6,9 @@ import 'package:nexbanak/app/theme/app_text_styles.dart';
 import 'package:nexbanak/core/utils/formatters.dart';
 import 'package:nexbanak/core/utils/responsive.dart';
 import 'package:nexbanak/features/customer/controllers/customer_home_controller.dart';
+import 'package:nexbanak/features/customer/views/services_views.dart';
+import 'package:nexbanak/shared/widgets/animated_card.dart';
+import 'package:nexbanak/shared/widgets/brand_icons.dart';
 import 'package:nexbanak/shared/widgets/data_cards.dart';
 import 'package:nexbanak/shared/widgets/feedback_widgets.dart';
 import 'package:nexbanak/shared/widgets/financial_chart.dart';
@@ -47,17 +50,46 @@ class CustomerHomeView extends StatelessWidget {
             GridView.count(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              crossAxisCount: context.responsive(mobile: 2, tablet: 3, desktop: 4),
+              crossAxisCount: context.responsive(mobile: 2, tablet: 4, desktop: 4),
               mainAxisSpacing: 10,
               crossAxisSpacing: 10,
-              childAspectRatio: 1.5,
+              childAspectRatio: 1.22,
               children: <Widget>[
+                QuickActionButton(
+                  icon: Icons.swap_horiz_rounded,
+                  label: 'Transfer',
+                  onTap: c.openTransfer,
+                  color: AppColors.success,
+                ),
+                QuickActionButton(
+                  icon: Icons.account_balance_wallet_rounded,
+                  label: 'MFS (bKash/Nagad)',
+                  onTap: () => Get.to<dynamic>(() => const MfsTransferView()),
+                  customWidget: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      BrandIcons.bkash(size: 24),
+                      const SizedBox(width: 4),
+                      BrandIcons.nagad(size: 24),
+                    ],
+                  ),
+                ),
+                QuickActionButton(
+                  icon: Icons.receipt_long_rounded,
+                  label: 'Pay Bills',
+                  onTap: () => Get.to<dynamic>(() => const BillPayView()),
+                  color: AppColors.info,
+                ),
+                QuickActionButton(
+                  icon: Icons.phone_android_rounded,
+                  label: 'Top-up',
+                  onTap: () => Get.to<dynamic>(() => const MobileTopupView()),
+                  color: AppColors.gold,
+                ),
                 QuickActionButton(icon: Icons.south_west_rounded, label: 'Deposit', onTap: c.openDeposit),
                 QuickActionButton(icon: Icons.north_east_rounded, label: 'Withdraw', onTap: c.openWithdrawal, color: AppColors.gold),
-                QuickActionButton(icon: Icons.swap_horiz_rounded, label: 'Transfer', onTap: c.openTransfer, color: AppColors.success),
                 QuickActionButton(icon: Icons.account_balance_rounded, label: 'Loans', onTap: c.openLoans),
                 QuickActionButton(icon: Icons.credit_card_rounded, label: 'Cards', onTap: c.openCards, color: AppColors.gold),
-                QuickActionButton(icon: Icons.description_rounded, label: 'Statements', onTap: c.openStatement),
               ],
             ),
             const SizedBox(height: 24),
@@ -66,18 +98,25 @@ class CustomerHomeView extends StatelessWidget {
               children: <Widget>[
                 Expanded(
                   flex: 3,
-                  child: FinancialChart(
-                    title: 'Income vs expenses',
-                    labels: const <String>['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-                    primary: c.stats.value?.monthlyIncome ?? const <double>[],
-                    secondary: c.stats.value?.monthlyExpense ?? const <double>[],
+                  child: AnimatedCard(
+                    borderRadius: 20,
+                    child: Padding(
+                      padding: const EdgeInsets.all(14),
+                      child: FinancialChart(
+                        title: 'Income vs expenses',
+                        labels: const <String>['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                        primary: c.stats.value?.monthlyIncome ?? const <double>[],
+                        secondary: c.stats.value?.monthlyExpense ?? const <double>[],
+                      ),
+                    ),
                   ),
                 ),
                 if (!context.isMobile) ...<Widget>[
                   const SizedBox(width: 16),
                   Expanded(
                     flex: 2,
-                    child: Card(
+                    child: AnimatedCard(
+                      borderRadius: 20,
                       child: Padding(
                         padding: const EdgeInsets.all(18),
                         child: Column(
@@ -105,18 +144,16 @@ class CustomerHomeView extends StatelessWidget {
               onAction: c.openTransactions,
             ),
             const SizedBox(height: 10),
-            Card(
-              child: Column(
-                children: c.recent
-                    .map(
-                      (txn) => TransactionCard(
-                        transaction: txn,
-                        hidden: c.balanceHidden.value,
-                        onTap: () => Get.toNamed(Routes.transactionDetail, arguments: txn.id),
-                      ),
-                    )
-                    .toList(),
-              ),
+            Column(
+              children: c.recent
+                  .map(
+                    (txn) => TransactionCard(
+                      transaction: txn,
+                      hidden: c.balanceHidden.value,
+                      onTap: () => Get.toNamed(Routes.transactionDetail, arguments: txn.id),
+                    ),
+                  )
+                  .toList(),
             ),
             const SizedBox(height: 24),
             SectionHeader(
@@ -125,22 +162,26 @@ class CustomerHomeView extends StatelessWidget {
               onAction: c.openNotifications,
             ),
             const SizedBox(height: 10),
-            Card(
-              child: Column(
-                children: c.notifications
-                    .take(3)
-                    .map((n) => ListTile(
-                          leading: const Icon(Icons.notifications_none_rounded,
-                              color: AppColors.secondaryBlue),
-                          title: Text(n.title, style: AppTextStyles.bodyLarge),
-                          subtitle: Text(n.body,
-                              style: AppTextStyles.bodySmall, maxLines: 1,
-                              overflow: TextOverflow.ellipsis),
-                          onTap: c.openNotifications,
-                        ))
-                    .toList(),
-              ),
-            ),
+            ...c.notifications.take(3).map(
+                  (n) => Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: AnimatedCard(
+                      borderRadius: 14,
+                      child: ListTile(
+                        leading: const Icon(Icons.notifications_none_rounded,
+                            color: AppColors.secondaryBlue),
+                        title: Text(n.title, style: AppTextStyles.bodyLarge),
+                        subtitle: Text(
+                          n.body,
+                          style: AppTextStyles.bodySmall,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        onTap: c.openNotifications,
+                      ),
+                    ),
+                  ),
+                ),
             const SizedBox(height: 30),
           ],
         ),

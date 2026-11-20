@@ -20,6 +20,20 @@ class ServicesController extends BaseController {
   final RxString fdAmount = ''.obs;
   final RxInt fdTerm = 12.obs;
 
+  final RxString selectedAccountId = 'acc_001'.obs;
+  final RxString billerName = 'DESCO Electricity'.obs;
+  final RxString customerCode = ''.obs;
+  final RxString billAmount = ''.obs;
+  final RxString billNote = ''.obs;
+
+  final RxString operatorName = 'Grameenphone'.obs;
+  final RxString mobileNumber = ''.obs;
+  final RxString topupAmount = ''.obs;
+
+  final RxString mfsProvider = 'bKash'.obs;
+  final RxString mfsMobile = ''.obs;
+  final RxString mfsAmount = ''.obs;
+
   @override
   void onInit() {
     super.onInit();
@@ -40,6 +54,76 @@ class ServicesController extends BaseController {
         fixedDeposits.assignAll(values[3] as List<FixedDepositModel>);
         return true;
       });
+
+  Future<void> payBill() => guard(
+        () async {
+          final String? error = Validators.amount(billAmount.value);
+          if (error != null) {
+            showError(error);
+            return false;
+          }
+          if (customerCode.value.trim().isEmpty) {
+            showError('Enter account/customer code');
+            return false;
+          }
+          await Get.find<RepositoryProvider>().banking.createBillPayment(
+                accountId: selectedAccountId.value,
+                billerName: billerName.value,
+                customerCode: customerCode.value,
+                amount: billAmount.value,
+                note: billNote.value,
+              );
+          await load();
+          return true;
+        },
+        successMessage: 'Bill paid successfully!',
+      );
+
+  Future<void> topupMobile() => guard(
+        () async {
+          final String? error = Validators.amount(topupAmount.value);
+          if (error != null) {
+            showError(error);
+            return false;
+          }
+          if (mobileNumber.value.trim().length < 10) {
+            showError('Enter a valid mobile number');
+            return false;
+          }
+          await Get.find<RepositoryProvider>().banking.createMobileTopup(
+                accountId: selectedAccountId.value,
+                operatorName: operatorName.value,
+                mobileNumber: mobileNumber.value,
+                amount: topupAmount.value,
+              );
+          await load();
+          return true;
+        },
+        successMessage: 'Mobile top-up successful!',
+      );
+
+  Future<void> transferMfs() => guard(
+        () async {
+          final String? error = Validators.amount(mfsAmount.value);
+          if (error != null) {
+            showError(error);
+            return false;
+          }
+          if (mfsMobile.value.trim().length < 10) {
+            showError('Enter a valid recipient mobile number');
+            return false;
+          }
+          await Get.find<RepositoryProvider>().banking.createMfsTransfer(
+                accountId: selectedAccountId.value,
+                mfsProvider: mfsProvider.value,
+                recipientMobile: mfsMobile.value,
+                amount: mfsAmount.value,
+              );
+          await load();
+          return true;
+        },
+        successMessage: 'MFS Transfer completed!',
+      );
 
   Future<void> applyLoan() => guard(
         () async {

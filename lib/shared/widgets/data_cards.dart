@@ -4,6 +4,8 @@ import 'package:nexbanak/app/theme/app_text_styles.dart';
 import 'package:nexbanak/core/utils/formatters.dart';
 import 'package:nexbanak/data/models/account_model.dart';
 import 'package:nexbanak/data/models/transaction_model.dart';
+import 'package:nexbanak/shared/widgets/animated_card.dart';
+import 'package:nexbanak/shared/widgets/brand_icons.dart';
 import 'package:nexbanak/shared/widgets/feedback_widgets.dart';
 
 class BalanceCard extends StatelessWidget {
@@ -26,8 +28,12 @@ class BalanceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return AnimatedCard(
       onTap: onTap,
+      borderRadius: 22,
+      enableScaleAnimation: true,
+      elevation: 6,
+      border: Border.all(color: Colors.transparent),
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.all(24),
@@ -40,9 +46,9 @@ class BalanceCard extends StatelessWidget {
           ),
           boxShadow: <BoxShadow>[
             BoxShadow(
-              color: AppColors.primaryNavy.withValues(alpha: 0.28),
+              color: AppColors.primaryNavy.withValues(alpha: 0.35),
               blurRadius: 24,
-              offset: const Offset(0, 12),
+              offset: const Offset(0, 10),
             ),
           ],
         ),
@@ -71,11 +77,12 @@ class BalanceCard extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                       decoration: BoxDecoration(
-                        color: AppColors.gold.withValues(alpha: 0.18),
+                        color: AppColors.gold.withValues(alpha: 0.22),
                         borderRadius: BorderRadius.circular(999),
+                        border: Border.all(color: AppColors.gold.withValues(alpha: 0.4)),
                       ),
                       child: Text('NEXBANK',
-                          style: AppTextStyles.labelSmall.copyWith(color: AppColors.gold)),
+                          style: AppTextStyles.labelSmall.copyWith(color: AppColors.gold, fontWeight: FontWeight.bold)),
                     ),
                   ],
                 ),
@@ -90,6 +97,8 @@ class BalanceCard extends StatelessWidget {
                     Text(Formatters.maskAccount(accountNumber),
                         style: AppTextStyles.bodyMedium.copyWith(color: Colors.white70)),
                     const Spacer(),
+                    BrandIcons.visa(size: 20),
+                    const SizedBox(width: 12),
                     IconButton(
                       onPressed: onToggleVisibility,
                       icon: Icon(
@@ -127,58 +136,43 @@ class AccountCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool dark = Theme.of(context).brightness == Brightness.dark;
-    return Card(
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.all(18),
-          child: Row(
-            children: <Widget>[
-              Container(
-                width: 46,
-                height: 46,
-                decoration: BoxDecoration(
-                  color: account.isSavings
-                      ? AppColors.lightBlue
-                      : AppColors.gold.withValues(alpha: 0.14),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Icon(
-                  account.isSavings ? Icons.savings_rounded : Icons.account_balance_wallet_rounded,
-                  color: account.isSavings ? AppColors.secondaryBlue : AppColors.gold,
-                ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Text(account.name, style: AppTextStyles.titleMedium),
-                    const SizedBox(height: 4),
-                    Text(Formatters.maskAccount(account.accountNumber),
-                        style: AppTextStyles.bodySmall
-                            .copyWith(color: AppColors.mutedText(dark))),
-                  ],
-                ),
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
+    return AnimatedCard(
+      onTap: onTap,
+      borderRadius: 16,
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Row(
+          children: <Widget>[
+            BrandIcons.bankLogo(account.name, size: 44),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  Text(
-                    hidden ? '•••••' : Formatters.money(account.balance),
-                    style: AppTextStyles.titleMedium,
-                  ),
-                  const SizedBox(height: 6),
-                  StatusChip(status: account.status),
+                  Text(account.name, style: AppTextStyles.titleMedium),
+                  const SizedBox(height: 4),
+                  Text(Formatters.maskAccount(account.accountNumber),
+                      style: AppTextStyles.bodySmall
+                          .copyWith(color: AppColors.mutedText(dark))),
                 ],
               ),
-              if (selected) ...<Widget>[
-                const SizedBox(width: 10),
-                const Icon(Icons.check_circle, color: AppColors.success),
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: <Widget>[
+                Text(
+                  hidden ? '•••••' : Formatters.money(account.balance),
+                  style: AppTextStyles.titleMedium,
+                ),
+                const SizedBox(height: 6),
+                StatusChip(status: account.status),
               ],
+            ),
+            if (selected) ...<Widget>[
+              const SizedBox(width: 10),
+              const Icon(Icons.check_circle, color: AppColors.success),
             ],
-          ),
+          ],
         ),
       ),
     );
@@ -197,9 +191,18 @@ class TransactionCard extends StatelessWidget {
   final VoidCallback? onTap;
   final bool hidden;
 
-  @override
-  Widget build(BuildContext context) {
-    final bool dark = Theme.of(context).brightness == Brightness.dark;
+  Widget _buildBrandLeading() {
+    final String title = transaction.title.toLowerCase();
+    if (title.contains('bkash')) return BrandIcons.bkash(size: 40);
+    if (title.contains('nagad')) return BrandIcons.nagad(size: 40);
+    if (title.contains('rocket')) return BrandIcons.rocket(size: 40);
+    if (title.contains('upay')) return BrandIcons.upay(size: 40);
+    if (title.contains('desco') || title.contains('electricity') || title.contains('dpdc')) {
+      return BrandIcons.utilityLogo('electricity', size: 40);
+    }
+    if (title.contains('wasa') || title.contains('water')) return BrandIcons.utilityLogo('water', size: 40);
+    if (title.contains('titas') || title.contains('gas')) return BrandIcons.utilityLogo('gas', size: 40);
+
     final IconData icon = switch (transaction.type) {
       'deposit' => Icons.arrow_downward_rounded,
       'withdrawal' => Icons.local_atm_rounded,
@@ -207,45 +210,71 @@ class TransactionCard extends StatelessWidget {
       'loan' => Icons.account_balance_rounded,
       _ => Icons.credit_card_rounded,
     };
-    final Color color = transaction.isCredit ? AppColors.success : AppColors.primaryNavy;
+    final Color color = transaction.isCredit ? AppColors.success : AppColors.secondaryBlue;
+
+    return Container(
+      width: 40,
+      height: 40,
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Icon(icon, color: color, size: 20),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bool dark = Theme.of(context).brightness == Brightness.dark;
+    final Color color = transaction.isCredit ? AppColors.success : (dark ? AppColors.darkText : AppColors.primaryNavy);
     final bool isPending = transaction.status.toLowerCase() != 'completed';
 
-    return ListTile(
+    return AnimatedCard(
       onTap: onTap,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      leading: Container(
-        width: 42,
-        height: 42,
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.10),
-          borderRadius: BorderRadius.circular(12),
+      borderRadius: 14,
+      margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        child: Row(
+          children: <Widget>[
+            _buildBrandLeading(),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(transaction.title,
+                      style: AppTextStyles.bodyLarge, maxLines: 1, overflow: TextOverflow.ellipsis),
+                  const SizedBox(height: 2),
+                  Text(
+                    '${Formatters.date(transaction.date)} • ${transaction.reference}',
+                    style: AppTextStyles.bodySmall.copyWith(color: AppColors.mutedText(dark)),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: <Widget>[
+                Text(
+                  '${transaction.isCredit ? '+' : '−'}${hidden ? '••••' : Formatters.money(transaction.amount)}',
+                  style: AppTextStyles.titleMedium.copyWith(color: color, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 3),
+                if (isPending)
+                  StatusChip(status: transaction.status)
+                else
+                  Text(transaction.category,
+                      style: AppTextStyles.bodySmall
+                          .copyWith(color: AppColors.mutedText(dark))),
+              ],
+            ),
+          ],
         ),
-        child: Icon(icon, color: color, size: 20),
-      ),
-      title: Text(transaction.title,
-          style: AppTextStyles.bodyLarge, maxLines: 1, overflow: TextOverflow.ellipsis),
-      subtitle: Text(
-        '${Formatters.date(transaction.date)} • ${transaction.reference}',
-        style: AppTextStyles.bodySmall.copyWith(color: AppColors.mutedText(dark)),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-      ),
-      trailing: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: <Widget>[
-          Text(
-            '${transaction.isCredit ? '+' : '−'}${hidden ? '••••' : Formatters.money(transaction.amount)}',
-            style: AppTextStyles.titleMedium.copyWith(color: color),
-          ),
-          const SizedBox(height: 3),
-          if (isPending)
-            StatusChip(status: transaction.status)
-          else
-            Text(transaction.category,
-                style: AppTextStyles.bodySmall
-                    .copyWith(color: AppColors.mutedText(dark))),
-        ],
       ),
     );
   }
@@ -258,40 +287,50 @@ class QuickActionButton extends StatelessWidget {
     required this.label,
     required this.onTap,
     this.color = AppColors.secondaryBlue,
+    this.customWidget,
   });
 
   final IconData icon;
   final String label;
   final VoidCallback onTap;
   final Color color;
+  final Widget? customWidget;
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    return AnimatedCard(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: 16,
+      enableScaleAnimation: true,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
-        decoration: BoxDecoration(
-          color: Theme.of(context).cardColor,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.outline(Theme.of(context).brightness == Brightness.dark)),
-        ),
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(14),
+            customWidget ??
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Icon(icon, color: color, size: 22),
+                ),
+            const SizedBox(height: 6),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                label,
+                style: AppTextStyles.labelSmall.copyWith(
+                  fontSize: 11,
+                  color: isDark ? AppColors.darkText : AppColors.textPrimary,
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 1,
               ),
-              child: Icon(icon, color: color, size: 22),
             ),
-            const SizedBox(height: 10),
-            Text(label,
-                style: AppTextStyles.labelSmall.copyWith(fontSize: 11),
-                textAlign: TextAlign.center),
           ],
         ),
       ),
@@ -318,7 +357,8 @@ class StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool dark = Theme.of(context).brightness == Brightness.dark;
-    return Card(
+    return AnimatedCard(
+      borderRadius: 14,
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
